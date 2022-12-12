@@ -24,12 +24,13 @@ print("loading dataset %s" % data_name, flush=True)
 
 with pl.StringCache():
     x = pl.read_csv(src_grp, dtype={"id4":pl.Int32, "id5":pl.Int32, "id6":pl.Int32, "v1":pl.Int32, "v2":pl.Int32, "v3":pl.Float64}, low_memory=True)
-    x["id1"] = x["id1"].cast(pl.Categorical)
+    x = x.with_column(pl.col("id1").cast(pl.Categorical))
     x["id1"].shrink_to_fit(in_place=True)
-    x["id2"] = x["id2"].cast(pl.Categorical)
+    x = x.with_column(pl.col("id2").cast(pl.Categorical))
     x["id2"].shrink_to_fit(in_place=True)
-    x["id3"] = x["id3"].cast(pl.Categorical)
+    x = x.with_column(pl.col("id3").cast(pl.Categorical))
     x["id3"].shrink_to_fit(in_place=True)
+
 
 in_rows = x.shape[0]
 x = x.lazy()
@@ -42,7 +43,7 @@ print("grouping...", flush=True)
 question = "sum v1 by id1" # q1
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id1").agg(pl.sum("v1")).collect()
+ans = x.groupby("id1").agg(pl.sum("v1").alias("v1_sum")).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -53,7 +54,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id1").agg(pl.sum("v1")).collect()
+ans = x.groupby("id1").agg(pl.sum("v1").alias("v1_sum")).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -68,7 +69,7 @@ del ans
 question = "sum v1 by id1:id2" # q2
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby(["id1","id2"]).agg(pl.sum("v1")).collect()
+ans = x.groupby(["id1","id2"]).agg(pl.sum("v1").alias("v1_sum")).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -79,7 +80,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby(["id1","id2"]).agg(pl.sum("v1")).collect()
+ans = x.groupby(["id1","id2"]).agg(pl.sum("v1").alias("v1_sum")).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -94,7 +95,7 @@ del ans
 question = "sum v1 mean v3 by id3" # q3
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id3").agg([pl.sum("v1"), pl.mean("v3")]).collect()
+ans = x.groupby("id3").agg([pl.sum("v1").alias("v1_sum"), pl.mean("v3").alias("v3_mean")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -105,7 +106,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id3").agg([pl.sum("v1"), pl.mean("v3")]).collect()
+ans = x.groupby("id3").agg([pl.sum("v1").alias("v1_sum"), pl.mean("v3").alias("v3_mean")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -120,7 +121,7 @@ del ans
 question = "mean v1:v3 by id4" # q4
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id4").agg([pl.mean("v1"), pl.mean("v2"), pl.mean("v3")]).collect()
+ans = x.groupby("id4").agg([pl.mean("v1").alias("v1_mean"), pl.mean("v2").alias("v2_mean"), pl.mean("v3").alias("v3_mean")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -131,7 +132,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id4").agg([pl.mean("v1"), pl.mean("v2"), pl.mean("v3")]).collect()
+ans = x.groupby("id4").agg([pl.mean("v1").alias("v1_mean"), pl.mean("v2").alias("v2_mean"), pl.mean("v3").alias("v3_mean")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -146,7 +147,7 @@ del ans
 question = "sum v1:v3 by id6" # q5
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id6").agg([pl.sum("v1"), pl.sum("v2"), pl.sum("v3")]).collect()
+ans = x.groupby("id6").agg([pl.sum("v1").alias("v1_sum"), pl.sum("v2").alias("v2_sum"), pl.sum("v3").alias("v3_sum")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -157,7 +158,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.groupby("id6").agg([pl.sum("v1"), pl.sum("v2"), pl.sum("v3")]).collect()
+ans = x.groupby("id6").agg([pl.sum("v1").alias("v1_sum"), pl.sum("v2").alias("v2_sum"), pl.sum("v3").alias("v3_sum")]).collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -224,7 +225,7 @@ del ans
 question = "largest two v3 by id6" # q8
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.drop_nulls("v3").sort("v3", reverse=True).groupby("id6").agg(col("v3").head(2).alias("largest2_v3")).explode("largest2_v3").collect()
+ans = x.drop_nulls("v3").sort("v3", reverse=True).groupby("id6").agg(pl.col("v3").head(2).alias("largest2_v3")).explode("largest2_v3").collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
@@ -235,7 +236,7 @@ write_log(task=task, data=data_name, in_rows=in_rows, question=question, out_row
 del ans
 gc.collect()
 t_start = timeit.default_timer()
-ans = x.drop_nulls("v3").sort("v3", reverse=True).groupby("id6").agg(col("v3").head(2).alias("largest2_v3")).explode("largest2_v3").collect()
+ans = x.drop_nulls("v3").sort("v3", reverse=True).groupby("id6").agg(pl.col("v3").head(2).alias("largest2_v3")).explode("largest2_v3").collect()
 print(ans.shape, flush=True)
 t = timeit.default_timer() - t_start
 m = memory_usage()
